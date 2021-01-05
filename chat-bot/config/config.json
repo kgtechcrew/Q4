@@ -1,0 +1,22 @@
+{
+    "port": 8003,
+    "dbConfig": {
+      "url": "mongodb://localhost:27017/",
+      "dbname": "interview"
+    },
+    "loggerConfig": {
+      "appenders": {
+        "console": { "type": "console" },
+        "app": {
+          "type": "dateFile",
+          "filename": "logs/chat-bot.log",
+          "pattern": "-yyyy-MM-dd",
+          "alwaysIncludePattern": false
+        }
+      },
+      "categories": {
+        "chatbot": { "appenders": ["app"], "level": "INFO" },
+        "default": { "appenders": ["console"], "level": "ALL" }
+      }
+    }
+}
