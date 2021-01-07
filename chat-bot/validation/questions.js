@@ -2,6 +2,14 @@
 
 
 module.exports = {
+
+    
+    "Q0" : {
+        "question"   : "Do you want to begin again? Yes/No",
+        "key"       : "Begin",
+        "error"      : "Please, enter Yes/No",
+        "next"       : "Q1"
+    },
     "Q1" : {
         "question"   : "To start with, please mention the date (YYYY-MM-DD) of the interview.\n So, that we can cross check it with our interview schedule.",
         "key"       : "validateDate",
@@ -9,13 +17,13 @@ module.exports = {
         "next"       : "Q2"
     },
     "Q2" : {
-        "question"   : "And can I have candidate name please? ",
+        "question"   : "Can you enter the candidate name to verify?",
         "key"       : "validateString",
         "error"      : "Please, enter a valid name",
         "next"       : "Q3"
     },
     "Q3" : {
-        "question"   : "And lastly can I have candidate email address?",
+        "question"   : "Can you enter the candidate email address to verify?",
         "key"       : "validateEmail",
         "error"      : "Please, enter a valid email",
         "next"       : "Q4"

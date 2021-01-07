@@ -155,7 +155,7 @@ li.blue-chat p {
 
  
  #messages li:nth-child(odd) { 
- 	background: #e6ecf3 !important; 
+ 	background: #e6ecf3 ; 
  }
 
 

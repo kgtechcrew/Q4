@@ -4,8 +4,8 @@ const logger = require('../lib/logger');
 const candidates = require('../models/candidates');
 const feedback = require('../models/feedback');
 const constants = require('./constants');
-const { updateCandidateDetails } = require('../models/candidates');
 const LastQuestion = require('../models/lastquestion');
+const PreviousQuestion = require('../models/previousquestion');
 
 function Validation() {
     return {}
@@ -38,7 +38,7 @@ Validation.isValidDate = ( input) => {
 * @author tamilselvan.p
 */
 Validation.isAlphabets = (input) => {
-    var regex = /^[A-Za-z]+$/
+    var regex = /^[A-Za-z0-9]+$/
     input = input.trim();
     //Validate input value against the Regex.
     var isValid = regex.test(input);
@@ -71,6 +71,7 @@ Validation.isValidEmail = ( input ) => {
 Validation.isValidConfirmation = ( input ) => {
     var enums = ["YES", "NO"];
     input = input.trim();
+    logger.msg("INFO", "isValidConfirmation  " + (enums.indexOf(input) >= 0))
     var isValid = (enums.indexOf(input.toUpperCase()) >= 0);
     return isValid;
 };
@@ -83,13 +84,29 @@ Validation.isValidConfirmation = ( input ) => {
 * @returns True/False
 * @author tamilselvan.p
 */
-Validation.isValidSelection = ( input) => {
-    var enums = [1, 2, 3, 4];
+Validation.isValidSelection = (input) => {
+    var enums = ["1", "2", "3", "4"];
     input = input.trim();
-    var isValid = (enums.indexOf(input.toUpperCase()) < 0);
+    logger.msg("INFO", "Selection Creteria " + (enums.indexOf(input) >= 0))
+    var isValid = (enums.indexOf(input) >= 0);
     return isValid;
 };
 
+/**
+* function to validate user selection
+* @name isStart
+* @param input - User input
+* @param io - socket listener
+* @returns True/False
+* @author tamilselvan.p
+*/
+Validation.isStart = (input) => {
+  var enums = ["START"];
+  input = input.trim();
+  logger.msg("INFO", "is Start  " + (enums.indexOf(input.toUpperCase()) >= 0));
+  var isValid = (enums.indexOf(input.toUpperCase()) >= 0);
+  return isValid;
+};
 
 /**
 * function to validate user inputs
@@ -101,18 +118,69 @@ Validation.isValidSelection = ( input) => {
 */
 Validation.validateMessageAndMoveNext = (msg, io) => {
     switch(LastQuestion.get()){
+      case 'Q0':
+                if(Validation.isValidConfirmation(msg)) {
+                  if (msg.toUpperCase() === "NO"){
+                    if(PreviousQuestion.get() !== "Q1"){
+                      LastQuestion.store(PreviousQuestion.get());
+                      io.emit('message', question[LastQuestion.get()].question);
+                    }else{
+                      LastQuestion.store("Q9");
+                      io.emit('message', "Thank you! See you again");
+                    }
+                  }else{
+                      feedback.clearLocalUserErrorCount();
+                      LastQuestion.reset();
+                      io.emit('message', question[LastQuestion.get()].question);
+                  }
+                }else{
+                  io.emit("message", question.Q0.error);
+                }
+                break;
       case 'Q1':
                 if(Validation.isValidDate(msg)) {
-                  LastQuestion.store(question.Q1.next);
-                  io.emit('message', question[LastQuestion.get()].question);
+                  feedback.storeLocalUserInput({interview_date: msg.trim()});
+                  candidates.interviewDateExists(feedback.getLocalUserInput(), function(err, result){
+                    if(!err){
+                      LastQuestion.store(question.Q1.next);
+                      io.emit('message', question[LastQuestion.get()].question);  
+                    }else{
+                      feedback.increamentLocalUserErrorCount();
+                      if(feedback.getLocalUserErrorCount() > constants.QUESTION_RESET_ON_ERROR_COUNT){
+                        PreviousQuestion.store(LastQuestion.get());
+                        LastQuestion.store("Q0");
+                        io.emit('message', question[LastQuestion.get()].question)
+                      }else{
+                        io.emit('message', `We don't find any records for the ${JSON.stringify(feedback.getLocalUserInput())}. Please, enter valid data`); 
+                      }
+                    }
+                   });
                 }else{
                   io.emit("message", question.Q1.error);
                 }
                 break;
       case 'Q2':
                 if(Validation.isAlphabets(msg)) {
-                  LastQuestion.store(question.Q2.next);
-                  io.emit('message', question[LastQuestion.get()].question);
+                  feedback.storeLocalUserInput({name: msg.trim()});
+                  candidates.getCandidateDetails(feedback.getLocalUserInput(), function(err, result){
+                    if(!err){
+                      LastQuestion.store(question.Q2.next);
+                      io.emit('message', question[LastQuestion.get()].question);  
+                    }else{
+                      feedback.increamentLocalUserErrorCount();
+                      if(feedback.getLocalUserErrorCount() > constants.QUESTION_RESET_ON_ERROR_COUNT){
+                        PreviousQuestion.store(LastQuestion.get());
+                        LastQuestion.store("Q0");
+                        io.emit('message', question[LastQuestion.get()].question)
+                      }else{
+                        if(typeof result === "string"){
+                          io.emit('message', result);
+                        }else{
+                          io.emit('message', `We don't find any records for the ${JSON.stringify(feedback.getLocalUserInput())}. Please, enter valid data`); 
+                        }
+                      }
+                    }
+                   });
                 }else{
                   io.emit("message", question.Q2.error);
                 }
@@ -123,9 +191,18 @@ Validation.validateMessageAndMoveNext = (msg, io) => {
                   candidates.getCandidateDetails(feedback.getLocalUserInput(), function(err, result){
                     if(!err){
                       LastQuestion.store(question.Q3.next);
-                      io.emit('message', question[LastQuestion.get()].question + "\n" + result);  
+                      feedback.storeLocalUserInput({ candidateId: result._id});
+                      let info = `Candidate name: ${result.name} \n Job Title: ${result.jobTitle} \n Experience: ${result.experience} \n`;
+                      io.emit('message', question[LastQuestion.get()].question + "\n" + info);  
                     }else{
-                      io.emit('message', result); 
+                      feedback.increamentLocalUserErrorCount();
+                      if(feedback.getLocalUserErrorCount() > constants.QUESTION_RESET_ON_ERROR_COUNT){
+                        PreviousQuestion.store(LastQuestion.get());
+                        LastQuestion.store("Q0");
+                        io.emit('message', question[LastQuestion.get()].question)
+                      }else{
+                        io.emit('message', `We don't find any records for the ${JSON.stringify(feedback.getLocalUserInput())}. Please, enter valid data`); 
+                      }
                     }
                    });
                 }else{
@@ -135,8 +212,8 @@ Validation.validateMessageAndMoveNext = (msg, io) => {
       case 'Q4':
                 if(Validation.isValidConfirmation(msg)) {
                     if (msg.toUpperCase() === "NO"){
+                        feedback.clearLocalUserInput();
                         io.emit('message', 'Thank you very much for taking the time to interview the candidate.');
-                        io.emit('message', 'Request you to give your valuable feedback so that the best-qualified applicant gets the job.');
                         io.emit('message', question.Q1.question);
                         LastQuestion.reset();
                     }else{
@@ -185,8 +262,18 @@ Validation.validateMessageAndMoveNext = (msg, io) => {
                   io.emit("message", question.Q8.error);
                 }
                 break;
+      case 'Q9':
+                if(Validation.isStart(msg)) {
+                  feedback.clearLocalUserErrorCount();
+                  LastQuestion.reset();
+                  io.emit('message', question[LastQuestion.get()].question);
+                }else{
+                  io.emit("message", "Please, type 'start' to begin again");
+                }
+                break;
       default:
               LastQuestion.reset();
+              io.emit('message', 'Thank you very much for taking the time to interview the candidate.');
               io.emit('message', question[LastQuestion.get()].question);
 
     }

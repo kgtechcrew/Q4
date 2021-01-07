@@ -4,6 +4,7 @@ var _ = require('lodash');
 var ObjectId = require('mongodb').ObjectID;
 
 var currentCandidate = {};
+var userErrorCount   = 0;
 function Feedback() {
     return {}
 };
@@ -38,6 +39,38 @@ Feedback.getLocalUserInput = () => {
 */
 Feedback.clearLocalUserInput = () => {
     currentCandidate = {};
+}
+
+
+
+/**
+* function to store the user error count
+* @name increamentLocalUserErrorCount
+* @param input - feeback inputs
+* @author tamilselvan.p
+*/
+Feedback.increamentLocalUserErrorCount = () => {
+    
+    userErrorCount++;
+    logger.msg('INFO', 'User Error COunt : '+ userErrorCount)
+}
+
+/**
+* function to get the user error count
+* @name getLocalUserErrorCount
+* @author tamilselvan.p
+*/
+Feedback.getLocalUserErrorCount = () => {
+    return userErrorCount;
+}
+
+/**
+* function to clear the user error count
+* @name clearLocalUserErrorCount
+* @author tamilselvan.p
+*/
+Feedback.clearLocalUserErrorCount = () => {
+    userErrorCount = 0;
 }
 
 /**

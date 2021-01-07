@@ -35,6 +35,7 @@ LastQuestion.get = () => {
 */
 LastQuestion.reset = () => {
     lastQuestionAsked = "Q1";
+    logger.msg('INFO', 'last question asked '+ lastQuestionAsked);
 }
 
 module.exports = LastQuestion;
