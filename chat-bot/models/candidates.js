@@ -14,7 +14,7 @@ function Candidates() {
 */
 Candidates.interviewDateExists = (query, callback) => {
     var dbo = mongodb.getConnection();
-        dbo.collection("candidates").count(query,function(err, res) {
+        dbo.collection("candidates").countDocuments(query,function(err, res) {
             if(err || res === null){
                 logger.msg("INFO", err);
                 callback(true, "The email address not found in the list");
@@ -39,7 +39,7 @@ Candidates.getCandidateDetails = (query, callback) => {
     var dbo = mongodb.getConnection();
         dbo.collection("candidates").findOne(query,function(err, res) {
             if(err || res === null){
-                logger.msg("INFO",err);
+                logger.msg("ERROR", err);
                 callback(true, "The email address not found in the list");
             }else if(res.feedback !== undefined && res.feedback == true){
                 logger.msg("INFO", "The feedback has already posted")

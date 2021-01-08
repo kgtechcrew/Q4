@@ -39,6 +39,7 @@ Feedback.getLocalUserInput = () => {
 */
 Feedback.clearLocalUserInput = () => {
     currentCandidate = {};
+    logger.msg('INFO', 'Cleared currentCandidate : '+ JSON.stringify(currentCandidate));
 }
 
 
@@ -52,7 +53,7 @@ Feedback.clearLocalUserInput = () => {
 Feedback.increamentLocalUserErrorCount = () => {
     
     userErrorCount++;
-    logger.msg('INFO', 'User Error COunt : '+ userErrorCount)
+    logger.msg('INFO', 'User Error Count : '+ userErrorCount)
 }
 
 /**
@@ -121,6 +122,30 @@ Feedback.replaceDotWithUnderscore = (obj) => {
     }
   });
   return obj;
+}
+
+/**
+* function to get candidate info basedon user input
+* @name getFeedbackDetails
+* @param query - candidate search object
+* @param callback - callback function to execute the next action
+* @author tamilselvan.p
+*/
+Feedback.getFeedbackDetails = (query, callback) => {
+    var dbo = mongodb.getConnection();
+        dbo.collection("feedback").findOne(query,function(err, res) {
+            if(err || res === null){
+                logger.msg("ERROR", err);
+                callback(true, "Something wrong");
+            }else if(res.feedback !== undefined && res.feedback == true){
+                logger.msg("INFO", "The feedback has already posted")
+                callback(true, "The feedback has already posted");
+            }else{
+                Feedback.clearLocalUserErrorCount();
+                Feedback.storeLocalUserInput(query);
+                callback(false, res);
+            }
+        });
 }
 
 module.exports = Feedback;

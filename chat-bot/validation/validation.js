@@ -139,6 +139,7 @@ Validation.validateMessageAndMoveNext = (msg, io) => {
                 break;
       case 'Q1':
                 if(Validation.isValidDate(msg)) {
+                  feedback.clearLocalUserInput();
                   feedback.storeLocalUserInput({interview_date: msg.trim()});
                   candidates.interviewDateExists(feedback.getLocalUserInput(), function(err, result){
                     if(!err){
@@ -271,13 +272,62 @@ Validation.validateMessageAndMoveNext = (msg, io) => {
                   io.emit("message", "Please, type 'start' to begin again");
                 }
                 break;
-      default:
-              LastQuestion.reset();
-              io.emit('message', 'Thank you very much for taking the time to interview the candidate.');
-              io.emit('message', question[LastQuestion.get()].question);
-
+      case 'Q10':
+                if(Validation.isValidSelection(msg)) {
+                  LastQuestion.store(question.Q10.next[msg.trim()]);  
+                  io.emit('message', question[LastQuestion.get()].question);
+                }else{
+                  io.emit("message", question.Q10.error);
+                }
+                break;
+      case 'Q11':
+                if(Validation.isAlphabets(msg)) {
+                  feedback.clearLocalUserInput();
+                  feedback.clearLocalUserErrorCount();
+                  feedback.storeLocalUserInput({name: msg.trim()});
+                  feedback.getFeedbackDetails(feedback.getLocalUserInput(), function(err, result){
+                    if(!err){
+                      LastQuestion.store(question.Q11.next);
+                      io.emit('message', question[LastQuestion.get()].question);  
+                    }else{
+                      io.emit('message', `We don't find any records for the ${JSON.stringify(feedback.getLocalUserInput())}. Please, enter valid data`); 
+                    }
+                    });
+                }else{
+                  io.emit("message", question.Q11.error);
+                }
+                break;
+      case 'Q12':
+                if(Validation.isValidEmail(msg)) {
+                  feedback.storeLocalUserInput({email:msg.trim()});
+                  feedback.getFeedbackDetails(feedback.getLocalUserInput(), function(err, result){
+                    if(!err){
+                      LastQuestion.store(question.Q12.next);
+                      let info = `Hi ${result.name}, You have cleared previous round of the interview, will get a call back from HR soon. Please contact HR department for more information`;
+                      io.emit('message', info);  
+                    }else{
+                      io.emit('message', `We don't find any records for the ${JSON.stringify(feedback.getLocalUserInput())}. Please, enter valid data`); 
+                    }
+                    });
+                }else{
+                  io.emit("message", question.Q3.error);
+                }
+                break;            
+      case 'Q13':
+                if(Validation.isValidSelection(msg)) {
+                  feedback.clearLocalUserInput();
+                  feedback.clearLocalUserErrorCount();
+                  LastQuestion.store(question.Q13.next);
+                  io.emit("message", "Please, contact HR for further details and interview schedules");
+                }else{
+                  io.emit("message", question.Q13.error);
+                }
+                break;            
+        default:
+                LastQuestion.reset();
+                io.emit('message', 'Thank you very much for taking the time to interview the candidate.');
+                io.emit('message', question[LastQuestion.get()].question);
     }
   }
 
- 
 module.exports = Validation;

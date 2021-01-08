@@ -23,8 +23,8 @@ io.on('connection', (socket) => {
   feedback.clearLocalUserInput();
   lastQuestion.reset();
   socket.on('joining msg', () => {
-  	io.emit('message', 'Thank you very much for taking the time to interview the candidate. \n Request you to give your valuable feedback so that the best-qualified applicant gets the job.');
-    io.emit('message', question.Q1.question);
+  	io.emit('message', 'I am I-Bot, How can I help you. ');
+    io.emit('message', question.Q10.question);
   });
 
   socket.on('message', (msg) => {

@@ -1,6 +1,7 @@
 const logger = require("../lib/logger");
+const constants = require("../validation/constants");
 
-var lastQuestionAsked = "Q1";
+var lastQuestionAsked = constants.QUESTION_BEGIN;
 function LastQuestion() {
     return {}
 };
@@ -34,7 +35,7 @@ LastQuestion.get = () => {
 * @author tamilselvan.p
 */
 LastQuestion.reset = () => {
-    lastQuestionAsked = "Q1";
+    lastQuestionAsked = constants.QUESTION_BEGIN;
     logger.msg('INFO', 'last question asked '+ lastQuestionAsked);
 }
 
